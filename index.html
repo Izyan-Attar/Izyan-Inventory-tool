@@ -1575,25 +1575,7 @@ function billBookOrder(id){
 setTimeout(()=>{if(ordersConfigured())fetchOnlineOrders(true)},1200);setInterval(()=>{if(ordersConfigured()&&!document.hidden)fetchOnlineOrders(true)},60000);
 // Phone/laptop: check again as soon as the app is opened or switched back to
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&ordersConfigured())fetchOnlineOrders(true)});window.addEventListener('focus',()=>{if(ordersConfigured())fetchOnlineOrders(true)});
-// One-time (Sep 2026): Vyapar sale history 1 Jul – 23 Sep 2026 (35 bills). History only — stock is NOT deducted,
-// because current stock was counted after these sales. Vyapar #31 and #34 are already in this tool, so they are skipped.
-function applyVyaparImportV1(){
-  if(db.settings.vyaparImportV1)return;
-  const BILLS=[];
-  BILLS.forEach(b=>{
-    if(db.sales.some(x=>x.vyaparNo===b.vy))return;
-    let items=b.items.map(i=>{let p=i.manual?null:findProductByName(i.prod);return{productId:p?p.id:null,name:p?p.name:i.name,type:p?i.type:'Manual Item',size:p?i.size:'Custom',qty:i.qty,rate:i.rate,cost:0,manual:!p,free:!!i.free}});
-    db.sales.push({id:'saleVY'+b.vy,invoice:'VY-'+String(b.vy).padStart(3,'0'),vyaparNo:b.vy,imported:true,date:b.date,person:b.person,mobile:b.mobile,address:b.note,items,subtotal:b.sub,discount:b.disc,gst:0,tax:0,total:b.total,paid:b.paid,due:b.due,payment:b.due===0?'Paid':b.paid>0?'Partial':'Due',mode:b.mode,cogs:0,profit:0});
-    let c=findPerson(db.customers,b.person);if(!c){c={id:'c'+Date.now()+Math.random().toString(36).slice(2,6),name:b.person,mobile:b.mobile,address:'',purchases:0,received:0,outstanding:0};db.customers.push(c)}
-    if(!c.mobile&&b.mobile)c.mobile=b.mobile;c.purchases+=b.total;c.received+=b.paid;c.outstanding+=b.due;
-  });
-  db.sales.sort((a,b)=>(parseBizDate(a.date)||0)-(parseBizDate(b.date)||0));
-  recomputeAllSaleCosts();
-  db.settings.vyaparImportV1=new Date().toISOString();
-  persistLocal()
-  scheduleCloudSync();
-}
-applyVyaparImportV1();
+// Vyapar sale history (1 Jul – 23 Sep 2026) was imported once on 25 Sep 2026 and now lives in the cloud data; the embedded copy was removed so no customer data stays in this public repo.
 function applyFixesOct4(){
   if(db.settings.fixOct4V1||isFreshDb(db))return;
   db.products.forEach(p=>{if(isAttar(p)&&!String(p.size||'').trim())p.size='12ML'});
