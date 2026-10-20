@@ -291,6 +291,7 @@ body{font-family:"Jost",system-ui,-apple-system,"Segoe UI",sans-serif;background
 /* Home */
 .hm{max-width:760px;margin:0 auto 18px}.hm-hd{display:flex;justify-content:space-between;align-items:center;margin:4px 2px 0}.hm-date{font-size:13px;color:var(--muted);letter-spacing:.04em}.hm-hi{font-size:31px;line-height:1.05;margin-top:2px}
 .hm-logo{width:46px;height:46px;border-radius:14px;box-shadow:0 4px 12px rgba(0,0,0,.18)}
+.sync-chip{border:1px solid rgba(201,162,39,.45);background:rgba(255,255,255,.08);color:inherit;border-radius:999px;padding:6px 11px;font:600 11.5px/1.2 Jost,system-ui,sans-serif;white-space:nowrap;cursor:pointer}.sync-chip.ok{border-color:rgba(39,174,96,.6)}.sync-chip.warn{border-color:rgba(214,137,16,.8)}.sync-chip.err{border-color:rgba(192,57,43,.85)}
 .hm-hero{margin-top:14px;border-radius:24px;padding:18px 18px 16px;color:#f7ead2;background:radial-gradient(120% 140% at 0% 0%,#5b1220,#33070f);position:relative;overflow:hidden;border:1px solid rgba(226,194,127,.25);box-shadow:0 14px 34px rgba(58,10,21,.25)}
 .hm-hero:after{content:"";position:absolute;right:-40px;top:-40px;width:170px;height:170px;border-radius:50%;background:radial-gradient(circle,rgba(226,194,127,.22),transparent 70%);pointer-events:none}
 .hm-t{font-size:12px;font-weight:500;letter-spacing:.18em;color:var(--gold2)}.hm-v{font-size:36px;font-weight:600;margin-top:2px;font-variant-numeric:tabular-nums}.hm-s{font-size:13px;color:#dcc9ad;margin-top:1px;max-width:62%}
@@ -356,7 +357,7 @@ body{font-family:"Jost",system-ui,-apple-system,"Segoe UI",sans-serif;background
 
 <main class="main">
 <section id="dashboard" class="section active">
-<div class="hm" id="homeHero"><div class="hm-hd"><div><div class="hm-date" id="hmDate"></div><div class="hm-hi">Assalamu Alaikum</div></div><img src="icons/icon-192.png" alt="IZYAN" class="hm-logo"></div>
+<div class="hm" id="homeHero"><div class="hm-hd"><div><div class="hm-date" id="hmDate"></div><div class="hm-hi">Assalamu Alaikum</div></div><div style="display:flex;align-items:center;gap:10px"><button type="button" id="syncChip" class="sync-chip" onclick="autoSync(true)" title="Tap to sync now">☁️ Sync</button><img src="icons/icon-192.png" alt="IZYAN" class="hm-logo"></div></div>
 <div class="hm-hero"><div class="hm-t">TODAY'S SALES</div><div class="hm-v" id="hmSales">₹0</div><div class="hm-s" id="hmSalesSub"></div>
 <div class="hm-ring" id="hmRing"></div><div class="hm-pills" id="hmPills"></div></div>
 <div class="hm-chips"><button class="hm-chip" onclick="show('orderbook')"><b id="hmPend">0</b><span><i style="background:#d4a017"></i>Pending orders</span></button><button class="hm-chip" onclick="show('customers')"><b id="hmDue">₹0</b><span><i style="background:#c0392b"></i>Udhaar</span></button><button class="hm-chip" onclick="show('products')"><b id="hmLow">0</b><span><i style="background:#e67e22"></i>Low stock</span></button></div>
@@ -601,7 +602,7 @@ async function pushToCloud(force){let url=(db.settings.cloudUrl||'').trim();if(!
 function saveCloudUrl(){db.settings.cloudUrl=(cloudUrl.value||'').trim();let fresh=isFreshDb(db);persistLocal();idbPut('db',JSON.stringify(db));if(fresh&&db.settings.cloudUrl){alert('Cloud URL saved. This device has no data yet, so nothing was pushed. Now pulling your data FROM the cloud…');pullFromCloud(true);return}
  renderAll();alert('Cloud backend URL saved.');if(db.settings.cloudUrl){db.settings.cloudVerified=true;cloudSyncNow()}}
 function cloudSyncNow(){if(!db.settings.cloudUrl)return alert('Paste your Apps Script Web App URL first');clearTimeout(cloudSyncTimer);if(isFreshDb(db)){if(!confirm('⚠️ This device has NO verified data (fresh/starter data only). Pushing will OVERWRITE your cloud backup with it.\n\nPress Cancel and use "Pull Latest from Cloud" instead, unless you really want to start over.\n\nOverwrite cloud anyway?'))return;db.settings.freshSeed=false;persistLocal();pushToCloud(true);return}pushToCloud()}
-async function pullFromCloud(skipConfirm){
+async function pullFromCloud(skipConfirm,silent){
   let url=(db.settings.cloudUrl||'').trim();
   if(!url)return alert('Paste your Apps Script Web App URL first');
   if(!(skipConfirm===true||isFreshDb(db))&&!confirm('This will replace ALL local data on this device with the latest data from the cloud. Any changes made on this device since the last sync will be lost. Continue?'))return;
@@ -628,7 +629,7 @@ async function pullFromCloud(skipConfirm){
     if(cloudStatus)cloudStatus.textContent='✓ Pulled latest data from cloud at '+new Date().toLocaleTimeString('en-IN');
   }catch(e){
     if(cloudStatus)cloudStatus.textContent='Pull failed: '+e.message;
-    alert('Failed to pull from cloud: '+e.message);
+    if(!silent)alert('Failed to pull from cloud: '+e.message);
   }
 }
 function updateSafetyBanner(){let b=document.getElementById('safetyBanner');if(!b)return;let s=db.settings,now=Date.now(),day=864e5,msg='',col='#c0392b';
@@ -1938,6 +1939,74 @@ function tabSync(id){document.querySelectorAll('#tabbar button[data-t]').forEach
   if(typeof renderAll==='function'){const r0=renderAll;renderAll=function(){r0.apply(this,arguments);try{renderHome()}catch(e){console.error(e)}try{renderMoney()}catch(e){console.error(e)}}}
   if(typeof renderOnlineOrders==='function'){const o0=renderOnlineOrders;renderOnlineOrders=function(){o0.apply(this,arguments);try{renderHome()}catch(e){}}}
   tabSync((document.querySelector('.section.active')||{}).id||'dashboard');try{renderHome();renderMoney()}catch(e){console.error(e)}
+})();
+</script>
+<script>
+// ============================================================
+// AUTO SYNC (Oct 2026)
+// • Every change is still pushed to the cloud ~1.5s after saving (existing behaviour).
+// • NEW: changes made offline are remembered ("pending") and pushed as soon as the internet is back.
+// • NEW: the app checks the cloud when it opens, when it comes back to the screen and every 3 minutes,
+//   and pulls newer data silently — but ONLY when this device has nothing pending, so a pull can
+//   never wipe bills that have not reached the cloud yet.
+// Every push carries a time stamp (settings.syncStamp); a pull only happens when the cloud stamp is newer.
+// ============================================================
+(function(){
+  const DIRTY_KEY='izyan_bm_pending',EVERY=3*60*1000;
+  const isDirty=()=>{try{return localStorage.getItem(DIRTY_KEY)==='1'}catch(e){return false}};
+  const setDirty=v=>{try{v?localStorage.setItem(DIRTY_KEY,'1'):localStorage.removeItem(DIRTY_KEY)}catch(e){}};
+  let busy=false,lastMsg='';
+  function chip(text,cls){lastMsg=text;const c=document.getElementById('syncChip');if(!c)return;c.textContent=text;c.className='sync-chip'+(cls?' '+cls:'')}
+  function ago(ts){if(!ts)return'';const m=Math.floor((Date.now()-ts)/60000);return m<1?'just now':m<60?m+' min ago':Math.floor(m/60)+' h ago'}
+  function refreshChip(){
+    if(!db||!db.settings.cloudUrl){chip('☁️ Cloud off','warn');return}
+    if(!navigator.onLine){chip(isDirty()?'⚠️ Offline · will sync':'⚠️ Offline','warn');return}
+    if(isDirty()){chip('⏳ Saving…','warn');return}
+    chip('✓ Synced '+ago(db.settings.lastCloudOk),'ok');
+  }
+  window.refreshSyncChip=refreshChip;
+  // remember that something changed and still has to reach the cloud
+  const origSchedule=scheduleCloudSync;
+  scheduleCloudSync=function(){if(db&&db.settings.cloudUrl){setDirty(true);refreshChip()}return origSchedule.apply(this,arguments)};
+  // stamp every push; clear "pending" only when the push really succeeded
+  const origPush=pushToCloud;
+  pushToCloud=async function(force){
+    if(!db||!db.settings.cloudUrl)return origPush.apply(this,arguments);
+    if(!navigator.onLine){setDirty(true);refreshChip();return}
+    const before=db.settings.lastCloudOk,prevStamp=db.settings.syncStamp;
+    db.settings.syncStamp=Date.now();
+    await origPush.apply(this,arguments);
+    if(db.settings.lastCloudOk!==before){setDirty(false);persistLocal()}else{db.settings.syncStamp=prevStamp}
+    refreshChip();
+  };
+  async function autoSync(manual){
+    if(busy||!db)return;const url=(db.settings.cloudUrl||'').trim();
+    if(!url){refreshChip();if(manual)alert('Cloud URL is not set. Settings → Cloud Sync.');return}
+    if(!navigator.onLine){refreshChip();if(manual)alert('No internet right now. Your data is safe on this phone and will sync when you are online.');return}
+    busy=true;
+    try{
+      // 1) this device has unsent changes → send them first, never pull over them
+      if(isDirty()){chip('⏳ Saving…','warn');clearTimeout(cloudSyncTimer);await pushToCloud();return}
+      // 2) a brand-new/empty device → bring the data down
+      if(isFreshDb(db)&&!db.settings.cloudVerified){chip('⬇ Loading…','warn');await pullFromCloud(true,true);return}
+      // 3) compare stamps: pull only if the cloud has something newer than this device
+      chip('🔄 Checking…','');
+      const res=await fetch(url+(url.includes('?')?'&':'?')+'action=pull',{cache:'no-store'});const json=await res.json();
+      if(!json.ok)throw Error(json.error||'cloud error');
+      const cloudStamp=Number(json.data&&json.data.settings&&json.data.settings.syncStamp)||0,localStamp=Number(db.settings.syncStamp)||0;
+      if(cloudStamp>localStamp&&!isDirty()){chip('⬇ Updating…','warn');await pullFromCloud(true,true);db.settings.syncStamp=cloudStamp;persistLocal()}
+      else{db.settings.lastCloudOk=Date.now();persistLocal()}
+    }catch(e){chip('⚠️ Sync failed','err');if(manual)alert('Sync failed: '+e.message+'\nYour data is still saved on this phone.');busy=false;return}
+    finally{if(busy){busy=false;if(lastMsg!=='⚠️ Sync failed')refreshChip()}}
+  }
+  window.autoSync=autoSync;
+  window.addEventListener('online',()=>autoSync());
+  window.addEventListener('offline',refreshChip);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)autoSync()});
+  setInterval(()=>{if(!document.hidden)autoSync()},EVERY);
+  setInterval(()=>{if(!busy)refreshChip()},30000);
+  setTimeout(()=>autoSync(),2000);
+  refreshChip();
 })();
 </script>
 </body></html>
