@@ -1599,6 +1599,19 @@ function applyNewStockOct4(){
   persistLocal();scheduleCloudSync();
 }
 applyNewStockOct4();
+// New stock received 27 Oct 2026 (one-time add; skipped if a product with the same name already exists).
+// 12ml attar price as given by Abu; 6ml = half; perfume 50ml = 12ml + 150 (same rule as the 4 Oct stock), 100ml = double — editable in Products.
+function applyNewStockOct27(){
+  if(db.settings.newStockOct27V1||isFreshDb(db))return;
+  const items=[['Gucci Guilty','GUCG',50,500],['Issey Miyake','ISSM',50,500],['Issey Miyake Women','ISMW',25,500],['Jannatul Firdous','JANF',25,350],['White Oud','WHOD',25,400],['Chanel No. 5','CHN5',25,500],['Tuscan Leather','TUSL',50,500],['Club de Nuit','CLDN',25,500]];
+  let have=new Set(db.products.map(p=>String(p.name).trim().toLowerCase()));
+  let n=db.products.reduce((m,p)=>{let x=/^IZY-[A-Z0-9]+-(\d+)$/i.exec(String(p.sku||''));return x?Math.max(m,+x[1]):m},45)+1;
+  items.forEach(([name,code,g,a12],i)=>{if(have.has(name.toLowerCase()))return;let sku='IZY-'+code+'-'+String(n++).padStart(3,'0'),p50=a12+150;
+    db.products.push({id:'p'+Date.now()+i+Math.random().toString(36).slice(2,6),sku,name,category:'Attar',size:'12ML',purchase:0,purchaseAmt:0,purchaseQty:1,selling:a12,stock:g,min:1,stockG:g,minG:1,attar6:a12/2,attar12:a12,perfume50:p50,perfume100:p50*2})});
+  db.settings.newStockOct27V1=new Date().toISOString();
+  persistLocal();scheduleCloudSync();
+}
+applyNewStockOct27();
 if(!isFreshDb(db)&&migratePaymentAllocation()){persistLocal();scheduleCloudSync()}
 {let before=JSON.stringify(db.sales.map(x=>x.date));normalizeAllDates();if(JSON.stringify(db.sales.map(x=>x.date))!==before)persistLocal()}
 renderAll();
