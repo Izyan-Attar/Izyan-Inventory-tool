@@ -1620,6 +1620,29 @@ function applyNewStockOct27(){
   persistLocal();scheduleCloudSync();
 }
 applyNewStockOct27();
+// Attar cost prices from Abu's "Attar Cost price" sheet (1 Nov 2026) — one-time.
+// [names to match, amount paid ₹, grams] → cost per gram = amount ÷ grams. Only cost changes; stock and selling prices are not touched.
+function applyCostSheetNov1(){
+  if(db.settings.costSheetNov1V1||isFreshDb(db))return;
+  const C=[[['9pm Afnan','9 pm afnan'],150,25],[['Aquatic White','Lacoste White'],175,25],[['Arabian Oud'],350,25],[['Aramani Gold','Armani Gold'],400,25],[['Azzaro Most Wanted','Azzaro'],200,25],
+  [['Belgium Musk'],400,25],[['Bin Shaikh'],550,25],[['Bleu D Chanel','Bleu de Chanel','Blue de Chanel'],240,30],[['Brut'],120,25],[['Burberry Godess','Burberry Goddess'],200,25],
+  [['Cool Water','David off Cool Water','Davidoff Cool Water'],150,25],[['CR7'],125,25],[['Creed Aventus'],250,50],[['Dunhill Icon'],125,25],[['Dunhill Red'],125,25],
+  [['Gucci Flora','Gucci Florel'],500,50],[['Gucci Guilty','Gucci Gulity'],400,50],[['Gucci Rush'],125,25],[['Hawas'],200,25],[['Imperial Valley'],300,25],
+  [['Issey Miyake'],500,50],[['Issey Miyake Women','Issey Miyake (Women)'],150,25],[['Khamraha OG'],500,50],[['Khamraha Waha'],200,25],[['Malik Al Dhahab','Maliki Al Dhahab','Invictus Gold','Invicuts Gold'],496,62],
+  [['Mogra'],200,50],[['Musk Berry Fume'],250,25],[['Musk Khalifa'],800,50],[['Musk Rajali'],600,25],[['Musk Safi'],400,25],[['Musky Leather','Musk Leather'],300,25],
+  [['Prince'],800,25],[['Purple Oud'],200,25],[['Red Vanilla'],200,25],[['Royal Prophecy'],150,25],[['Savage Dior','Sauvage Dior'],200,25],[['Summer Oud'],550,25],
+  [['Tam Dao'],400,50],[['Turk Khalifa'],250,25],[['Turkey Oud'],1600,50],[['Valentino'],400,50]];
+  const nn=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+  let done=[],miss=[];
+  C.forEach(([names,amt,g])=>{let keys=names.map(nn),p=db.products.find(x=>isAttar(x)&&keys.includes(nn(x.name)));
+    if(!p){miss.push(names[0]);return}
+    p.purchaseAmt=amt;p.purchaseQty=g;p.purchase=amt/g;done.push(p.name)});
+  recomputeAllSaleCosts();
+  db.settings.costSheetNov1V1=new Date().toISOString();db.settings.costSheetNov1Missing=miss;
+  persistLocal();scheduleCloudSync();
+  setTimeout(()=>alert(`✅ Attar cost price updated for ${done.length} products.`+(miss.length?`\n\n⚠️ Not found in Products (add cost manually): ${miss.join(', ')}`:'')+`\n\nOld bills' cost & profit recalculated with these prices.`),800);
+}
+applyCostSheetNov1();
 if(!isFreshDb(db)&&migratePaymentAllocation()){persistLocal();scheduleCloudSync()}
 {let before=JSON.stringify(db.sales.map(x=>x.date));normalizeAllDates();if(JSON.stringify(db.sales.map(x=>x.date))!==before)persistLocal()}
 renderAll();
