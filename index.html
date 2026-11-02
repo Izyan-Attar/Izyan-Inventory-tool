@@ -1673,6 +1673,17 @@ function applyNewStockOct27(){
   persistLocal();scheduleCloudSync();
 }
 applyNewStockOct27();
+// New stock received 1 Nov 2026: Izyan Musk 100g for ₹1,600 (₹16/g). 12ml ₹600, 6ml ₹300, 50ml ₹750, 100ml ₹1,500 (one-time add; skipped if it already exists).
+function applyNewStockNov2(){
+  if(db.settings.newStockNov2V1||isFreshDb(db))return;
+  if(!db.products.some(p=>String(p.name).trim().toLowerCase()==='izyan musk')){
+    let n=db.products.reduce((m,p)=>{let x=/^IZY-[A-Z0-9]+-(\d+)$/i.exec(String(p.sku||''));return x?Math.max(m,+x[1]):m},53)+1;
+    db.products.push({id:'p'+Date.now()+Math.random().toString(36).slice(2,6),sku:'IZY-IZMK-'+String(n).padStart(3,'0'),name:'Izyan Musk',category:'Attar',size:'12ML',purchase:16,purchaseAmt:1600,purchaseQty:100,selling:600,stock:100,min:1,stockG:100,minG:1,attar6:300,attar12:600,perfume50:750,perfume100:1500});
+  }
+  db.settings.newStockNov2V1=new Date().toISOString();
+  persistLocal();scheduleCloudSync();
+}
+applyNewStockNov2();
 // Attar cost prices from Abu's "Attar Cost price" sheet (1 Nov 2026) — one-time.
 // [names to match, amount paid ₹, grams] → cost per gram = amount ÷ grams. Only cost changes; stock and selling prices are not touched.
 function applyCostSheetNov1(){
