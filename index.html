@@ -1673,12 +1673,17 @@ function applyNewStockOct27(){
   persistLocal();scheduleCloudSync();
 }
 applyNewStockOct27();
-// New stock received 1 Nov 2026: Izyan Musk 100g for ₹1,600 (₹16/g). 12ml ₹600, 6ml ₹300, 50ml ₹750, 100ml ₹1,500 (one-time add; skipped if it already exists).
+// New stock received 1 Nov 2026: Arba Wardat 50g (cost pending) and Izyan Musk 100g for ₹1,600 (₹16/g). 12ml ₹600, 6ml ₹300, 50ml ₹750, 100ml ₹1,500 (one-time add; skipped if it already exists).
 function applyNewStockNov2(){
   if(db.settings.newStockNov2V1||isFreshDb(db))return;
   if(!db.products.some(p=>String(p.name).trim().toLowerCase()==='izyan musk')){
     let n=db.products.reduce((m,p)=>{let x=/^IZY-[A-Z0-9]+-(\d+)$/i.exec(String(p.sku||''));return x?Math.max(m,+x[1]):m},53)+1;
     db.products.push({id:'p'+Date.now()+Math.random().toString(36).slice(2,6),sku:'IZY-IZMK-'+String(n).padStart(3,'0'),name:'Izyan Musk',category:'Attar',size:'12ML',purchase:16,purchaseAmt:1600,purchaseQty:100,selling:600,stock:100,min:1,stockG:100,minG:1,attar6:300,attar12:600,perfume50:750,perfume100:1500});
+  }
+  // Arba Wardat: 50g received, cost not known yet (0 — fill in Products when known). 12ml ₹500.
+  if(!db.products.some(p=>String(p.name).trim().toLowerCase()==='arba wardat')){
+    let n=db.products.reduce((m,p)=>{let x=/^IZY-[A-Z0-9]+-(\d+)$/i.exec(String(p.sku||''));return x?Math.max(m,+x[1]):m},53)+1;
+    db.products.push({id:'p'+Date.now()+'a'+Math.random().toString(36).slice(2,6),sku:'IZY-ARBW-'+String(n).padStart(3,'0'),name:'Arba Wardat',category:'Attar',size:'12ML',purchase:0,purchaseAmt:0,purchaseQty:1,selling:500,stock:50,min:1,stockG:50,minG:1,attar6:250,attar12:500,perfume50:650,perfume100:1300});
   }
   db.settings.newStockNov2V1=new Date().toISOString();
   persistLocal();scheduleCloudSync();
